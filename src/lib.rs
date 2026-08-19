@@ -36,6 +36,31 @@ mod tests {
     }
 
     #[test]
+    fn supports_escaped_quote_in_double_quotes() {
+        assert_eq!(parse_words("echo \"hello \\\"world\\\"\"").unwrap(), ["echo", "hello \"world\""]);
+    }
+
+    #[test]
+    fn supports_adjacent_quoted_and_unquoted_text() {
+        assert_eq!(parse_words("echo pre\"mid\"post").unwrap(), ["echo", "premidpost"]);
+    }
+
+    #[test]
+    fn keeps_empty_quoted_argument() {
+        assert_eq!(parse_words("echo \"\"").unwrap(), ["echo", ""]);
+    }
+
+    #[test]
+    fn ignores_whitespace_between_arguments() {
+        assert_eq!(parse_words("  echo   hello\tworld  ").unwrap(), ["echo", "hello", "world"]);
+    }
+
+    #[test]
+    fn empty_input_produces_no_arguments() {
+        assert!(parse_words("   \t\n").unwrap().is_empty());
+    }
+
+    #[test]
     fn rejects_unterminated_quotes() {
         assert!(parse_words("echo \"hello").is_err());
     }
@@ -48,16 +73,6 @@ mod tests {
     #[test]
     fn handles_unicode() {
         assert_eq!(parse_words("echo olá mundo 🌎").unwrap(), ["echo", "olá", "mundo", "🌎"]);
-    }
-
-    #[test]
-    fn keeps_empty_quoted_argument() {
-        assert_eq!(parse_words("echo \"\"").unwrap(), ["echo", ""]);
-    }
-
-    #[test]
-    fn supports_adjacent_quoted_and_unquoted_text() {
-        assert_eq!(parse_words("echo pre\"mid\"post").unwrap(), ["echo", "premidpost"]);
     }
 
     #[cfg(unix)]
