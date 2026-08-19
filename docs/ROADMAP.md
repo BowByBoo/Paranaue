@@ -72,14 +72,14 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Configuration is declarative TOML and currently supports only `[ui].prompt`; it never executes commands.
 - Configuration defaults are overridden by the user configuration file. CLI/environment overrides are not yet implemented and must not be implied by documentation.
 - Unknown configuration settings are rejected rather than silently ignored.
-- Configuration loading now has an explicit-path boundary, allowing deterministic file-loading tests without mutating the user's real environment.
+- Configuration loading has an explicit-path boundary, allowing deterministic file-loading tests without mutating the user's real environment.
 - A deterministic testing strategy is documented in `docs/TESTING.md`.
 - The current GitHub integration can write repository files, but no verified CI execution has been observed for the current main branch. Therefore CI is not considered validated.
 - `Cargo.lock` is currently only a generated header with no resolved packages. It must not be described as a verified reproducible dependency lock until a real Cargo resolution/build has populated and validated it.
 - A previous GitHub contents write was rejected because the remote blob SHA had changed; subsequent changes re-read the remote file before writing. This is now part of the safe-edit protocol.
 - `src/main.rs` and `lib.rs` were reviewed together to ensure the binary's help/version entry points are exported consistently.
 - Parser coverage explicitly includes empty input, whitespace separation, escaped quotes inside double quotes, and adjacent quoted/unquoted text. These tests are written but not yet execution-verified.
-- Shell tests cover current-directory initialization, relative navigation, invalid `cd` arity, missing directories, regular-file targets, and unknown commands. These tests are written but not yet execution-verified.
+- Shell tests cover current-directory initialization, relative navigation, invalid `cd` arity, missing directories, regular-file targets, and unknown commands. Temporary shell test paths now include a time-based nonce to reduce parallel-test collision risk. These tests are written but not yet execution-verified.
 - Process tests cover missing executables, invalid program names, exit status, working-directory propagation, and missing working directories. They are written but not yet execution-verified.
 
 ### Decisions made in this loop
@@ -92,6 +92,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Expand parser and shell tests before expanding shell semantics; this reduces regression risk without prematurely committing Forge to shell-operator behavior.
 - Keep `Shell::execute` private; test public behavior boundaries through small in-module invariants rather than exposing internals as a testing convenience.
 - Keep configuration file I/O injectable through an explicit path rather than mutating process-wide environment variables in tests.
+- Isolate temporary test paths from parallel collisions instead of relying on process ID alone.
 
 ## Reuse research already identified
 
