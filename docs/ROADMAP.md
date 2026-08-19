@@ -56,6 +56,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - [ ] Explicit exit-status model and semantics.
 - [ ] Security review of environment and process inheritance.
 - [x] Add shell navigation invariant tests for current-directory initialization, relative `cd`, and invalid `cd` arity.
+- [x] Add shell error-path tests for missing directories, regular-file targets, and unknown commands.
 - [ ] UX review of prompt, diagnostics, interruption, and EOF behavior.
 - [ ] Configuration integration tests, including malformed and unknown settings.
 - [ ] Clean-machine installation smoke test.
@@ -77,7 +78,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - A previous GitHub contents write was rejected because the remote blob SHA had changed; subsequent changes re-read the remote file before writing. This is now part of the safe-edit protocol.
 - `src/main.rs` and `lib.rs` were reviewed together to ensure the binary's help/version entry points are exported consistently.
 - Parser coverage explicitly includes empty input, whitespace separation, escaped quotes inside double quotes, and adjacent quoted/unquoted text. These tests are written but not yet execution-verified.
-- Shell tests now cover current-directory initialization, relative navigation, and the `cd` argument-count invariant. They are written but not yet execution-verified.
+- Shell tests cover current-directory initialization, relative navigation, invalid `cd` arity, missing directories, regular-file targets, and unknown commands. These tests are written but not yet execution-verified.
 
 ### Decisions made in this loop
 
