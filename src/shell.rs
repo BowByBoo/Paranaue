@@ -5,19 +5,25 @@ use std::path::PathBuf;
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 
-use crate::{history, parser, process, VERSION};
+use crate::{config, history, parser, process, VERSION};
 
 pub struct Shell {
     current_dir: PathBuf,
+    config: config::Config,
 }
 
 impl Shell {
     pub fn new() -> Self {
         let current_dir = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-        Self { current_dir }
+        Self {
+            current_dir,
+            config: config::Config::default(),
+        }
     }
 
     pub fn run(&mut self) -> io::Result<()> {
+        self.config = config::Config::load()?;
+
         let mut editor = DefaultEditor::new()
             .map_err(|error| io::Error::other(format!("failed to initialize line editor: {error}")))?;
 
@@ -29,7 +35,7 @@ impl Shell {
         println!("Type 'help' for help. Type 'exit' to quit.");
 
         let result = loop {
-            let prompt = format!("forge {}> ", self.current_dir.display());
+            let prompt = self.config.prompt(&self.current_dir);
             let input = match editor.readline(&prompt) {
                 Ok(input) => input,
                 Err(ReadlineError::Interrupted) => {
@@ -146,7 +152,7 @@ impl Default for Shell {
 
 fn print_help() {
     println!(
-        "Commands:\n  help       Show this help\n  pwd        Print the current directory\n  cd <path>  Change the current directory\n  version    Show the Forge version\n  exit       Exit Forge\n\nAny other command is executed as a native process.\n\nThe interactive editor provides cursor movement and persistent command history.\nSet FORGE_NO_HISTORY=1 to disable history persistence.\nQuotes and escapes are supported for arguments containing spaces."
+        "Commands:\n  help       Show this help\n  pwd        Print the current directory\n  cd <path>  Change the current directory\n  version    Show the Forge version\n  exit       Exit Forge\n\nAny other command is executed as a native process.\n\nThe interactive editor provides cursor movement and persistent command history.\nSet FORGE_NO_HISTORY=1 to disable history persistence.\nQuotes and escapes are supported for arguments containing spaces.\n\nConfiguration: config.toml in Forge's per-user configuration directory.\nThe configuration file is declarative and never executes commands."
     );
 }
 
