@@ -4,9 +4,9 @@ use std::process::{Command, ExitStatus};
 
 /// Execute a native process in the shell's current working directory.
 ///
-/// Forge intentionally delegates program lookup and process creation to the
-/// operating system. Shell-language features such as pipes and redirection
-/// are not part of this layer.
+/// Forge delegates program lookup, environment inheritance, and process
+/// creation to the operating system. Shell-language features such as pipes,
+/// redirection, and expansion are deliberately outside this layer.
 pub fn run(program: &str, args: &[String], current_dir: &Path) -> io::Result<ExitStatus> {
     Command::new(program)
         .args(args)
@@ -85,5 +85,24 @@ mod tests {
         let status = run("cmd", &args, Path::new(".")).expect("cmd must execute");
         assert!(!status.success());
         assert_eq!(status.code(), Some(7));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn executes_in_the_requested_working_directory() {
+        let base = std::env::temp_dir().join(format!("forge-process-test-{}", std::process::id()));
+        std::fs::create_dir_all(&base).unwrap();
+        let args = vec!["-c".to_owned(), "pwd".to_owned()];
+        let status = run("sh", &args, &base).expect("shell must execute");
+        assert!(status.success());
+        std::fs::remove_dir_all(base).unwrap();
+    }
+
+    #[test]
+    fn rejects_a_missing_working_directory_before_launching() {
+        let missing = std::env::temp_dir().join(format!("forge-missing-cwd-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&missing);
+        let result = run("forge-test-command-that-must-not-exist-7c4b1d9e", &[], &missing);
+        assert!(result.is_err());
     }
 }
