@@ -55,6 +55,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - [ ] Deterministic process-execution integration tests.
 - [ ] Explicit exit-status model and semantics.
 - [ ] Security review of environment and process inheritance.
+- [x] Add shell navigation invariant tests for current-directory initialization, relative `cd`, and invalid `cd` arity.
 - [ ] UX review of prompt, diagnostics, interruption, and EOF behavior.
 - [ ] Configuration integration tests, including malformed and unknown settings.
 - [ ] Clean-machine installation smoke test.
@@ -75,7 +76,8 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - `Cargo.lock` is currently only a generated header with no resolved packages. It must not be described as a verified reproducible dependency lock until a real Cargo resolution/build has populated and validated it.
 - A previous GitHub contents write was rejected because the remote blob SHA had changed; subsequent changes re-read the remote file before writing. This is now part of the safe-edit protocol.
 - `src/main.rs` and `lib.rs` were reviewed together to ensure the binary's help/version entry points are exported consistently.
-- Parser coverage now explicitly includes empty input, whitespace separation, escaped quotes inside double quotes, and adjacent quoted/unquoted text. These tests are written but not yet execution-verified.
+- Parser coverage explicitly includes empty input, whitespace separation, escaped quotes inside double quotes, and adjacent quoted/unquoted text. These tests are written but not yet execution-verified.
+- Shell tests now cover current-directory initialization, relative navigation, and the `cd` argument-count invariant. They are written but not yet execution-verified.
 
 ### Decisions made in this loop
 
@@ -84,9 +86,10 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Preserve the current small process API until integration evidence shows a real need for another abstraction.
 - Treat cross-module compile consistency as a required static review gate even when no executor is available.
 - Reconcile remote file SHA before every sequential GitHub contents update.
-- Expand parser tests before expanding parser semantics; this reduces regression risk without prematurely committing Forge to shell-operator behavior.
+- Expand parser and shell tests before expanding shell semantics; this reduces regression risk without prematurely committing Forge to shell-operator behavior.
+- Keep `Shell::execute` private; test public behavior boundaries through small in-module invariants rather than exposing internals as a testing convenience.
 
-### Reuse research already identified
+## Reuse research already identified
 
 - Brush: reference for parser/runtime separation, interactive behavior, testing, configuration, and platform concerns.
 - ReShell: reference for parser/checker/runtime/builtins/REPL separation.
