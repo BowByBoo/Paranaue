@@ -155,4 +155,13 @@ mod tests {
         assert_eq!(error.kind(), io::ErrorKind::NotADirectory);
         fs::remove_file(path).unwrap();
     }
+
+    #[test]
+    fn unknown_command_returns_actionable_error() {
+        let mut shell = Shell::new();
+        let result = shell.execute("forge-command-that-must-not-exist-7c4b1d9e");
+        let error = result.expect_err("missing command must return an error");
+        assert_eq!(error.kind(), io::ErrorKind::NotFound);
+        assert!(error.to_string().contains("command not found"));
+    }
 }
