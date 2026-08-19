@@ -1,5 +1,6 @@
 mod history;
 mod parser;
+mod paths;
 mod process;
 mod shell;
 
