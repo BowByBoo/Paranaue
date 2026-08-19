@@ -82,4 +82,22 @@ mod tests {
         let result: Result<Config, _> = toml::from_str("[ui]\nprompt = [\"not a string\"]");
         assert!(result.is_err());
     }
+
+    #[test]
+    fn prompt_replaces_all_cwd_placeholders() {
+        let config: Config = toml::from_str(
+            "[ui]\nprompt = \"{cwd} | {cwd}\"",
+        )
+        .unwrap();
+        assert_eq!(config.prompt(Path::new("/tmp/project")), "/tmp/project | /tmp/project");
+    }
+
+    #[test]
+    fn prompt_treats_unknown_braced_text_as_literal() {
+        let config: Config = toml::from_str(
+            "[ui]\nprompt = \"forge {unknown} {cwd}> \"",
+        )
+        .unwrap();
+        assert_eq!(config.prompt(Path::new("/tmp/project")), "forge {unknown} /tmp/project> ");
+    }
 }
