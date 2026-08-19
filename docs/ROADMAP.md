@@ -63,6 +63,8 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - [ ] Release and installation strategy for a clean machine.
 - [ ] Red Team review of the complete current codebase.
 - [ ] Research mature shell projects and crates before expanding the shell language.
+- [x] Red Team audit of parser state/error boundaries completed; no shell operators or expansion semantics added.
+- [ ] Parser fuzz/property testing strategy.
 
 ### Current observations
 
@@ -83,6 +85,8 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Process tests cover missing executables, invalid program names, exit status, working-directory propagation, and missing working directories. The missing-working-directory tests use a known platform command so they prove the working-directory precondition rather than conflating it with program lookup failure. These tests are written but not yet execution-verified.
 - The CLI now has executable-level smoke tests for help/version aliases, interactive `exit`, interactive help, and EOF. These tests are written but not yet execution-verified.
 - Configuration load errors are intentionally recoverable at shell startup: Forge reports a warning and falls back to defaults rather than becoming unusable because of a malformed user config.
+- Parser review found no need to broaden grammar during this loop. The implementation remains a deliberately small state machine with explicit errors for unfinished escapes and unterminated quotes.
+- Parser syntax is not yet a stable promise beyond words, quotes, and escapes; future operators must not be bolted onto this tokenizer without an explicit grammar design.
 
 ### Decisions made in this loop
 
@@ -96,7 +100,8 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Keep configuration file I/O injectable through an explicit path rather than mutating process-wide environment variables in tests.
 - Isolate temporary test paths from parallel collisions instead of relying on process ID alone.
 - Treat malformed or unreadable user configuration as a recoverable startup condition; preserve defaults and surface a warning.
-- Make the missing-working-directory process test use a known executable on each supported OS so the test isolates cwd validation from executable lookup.
+- Do not add shell operators, expansion, globbing, or scripting during parser hardening; establish the grammar and semantic model first.
+- Parser hardening did not reveal a justified semantic expansion; preserve the small state-machine boundary until property/fuzz testing provides evidence for further changes.
 
 ## Reuse research already identified
 
