@@ -1,89 +1,66 @@
-# Forge Configuration — Design Decision
+# Forge Configuration — v0.1 Contract
 
-Status: **proposed for v0.1**
+Status: **implemented, awaiting CI verification**
 
-This document records the configuration boundary before implementation. The goal is to avoid coupling Forge's configuration format to the future shell language.
+Forge v0.1 uses a **declarative TOML configuration file**. Configuration is data, not startup code.
 
-## Decision
+## Current schema
 
-Forge v0.1 will use a **declarative configuration file** rather than executing arbitrary startup code.
+```toml
+[ui]
+prompt = "forge {cwd}> "
+```
 
-The configuration layer must not become a hidden scripting engine.
+The only setting currently supported is `ui.prompt`.
 
-The initial configuration model should contain only settings that Forge itself owns, such as:
+`{cwd}` is replaced by Forge's current working directory. No other template language is interpreted.
 
-- prompt presentation;
-- history behavior and limits;
-- interactive editing preferences;
-- diagnostic/output preferences that are proven useful.
-
-Shell aliases, functions, plugins, executable startup hooks, and arbitrary command execution are explicitly outside this first configuration contract.
-
-## Why
-
-Mature shells demonstrate several valid approaches. Brush currently uses TOML configuration, while Nushell and fish use executable configuration/startup files with richer semantics. Those designs are useful references, but executable configuration would couple configuration to a language/runtime that Forge has not yet designed. It would also expand the security and startup-time surface prematurely.
-
-Forge should therefore start with data, not code.
+Unknown sections and settings are rejected instead of being silently ignored.
 
 ## Location
 
-The path layer will distinguish configuration from persistent state.
+Forge keeps configuration separate from persistent state.
 
-Platform conventions will be respected rather than hard-coded into the shell. On Unix-like systems, the design should honor XDG configuration conventions. On macOS and Windows, the corresponding per-user application configuration locations should be used.
+- Linux/Unix: `$XDG_CONFIG_HOME/forge/config.toml`, falling back to `$HOME/.config/forge/config.toml`.
+- macOS: `$HOME/Library/Application Support/Forge/config.toml`.
+- Windows: `%APPDATA%/Forge/config.toml`.
 
-The exact platform mapping will be implemented and tested as part of the configuration feature; this document intentionally does not duplicate platform-specific path logic.
+These conventions are implemented in the platform path boundary and must be verified by CI and integration tests.
 
 ## Precedence
 
-The initial precedence model is intentionally small:
+The current precedence is intentionally simple:
 
 1. built-in defaults;
-2. user configuration file;
-3. explicit command-line options/environment overrides, but only where the setting has a documented override mechanism.
+2. user configuration file.
 
-Forge must not silently merge arbitrary configuration sources.
+Command-line/environment overrides are **not implemented yet** and must not be implied by documentation.
 
-Project-local configuration is deferred until there is a concrete use case and a defined trust model.
+Project-local configuration is deferred until a concrete use case and trust model exist.
 
 ## Failure behavior
 
-Invalid configuration must never silently change behavior.
+If the configuration file exists but cannot be read or parsed, Forge fails startup with an actionable error containing the configuration path and the parser/read failure.
 
-The user should receive:
-
-- the configuration path;
-- the failing setting or location when known;
-- a useful explanation;
-- a non-zero startup failure only when the invalid configuration prevents safe operation.
-
-Forge should prefer a clear error over silently ignoring malformed configuration.
+Malformed configuration is not silently ignored.
 
 ## Security boundary
 
-Configuration is user-controlled input.
+Configuration never executes commands, expands shell syntax, or writes files while being parsed. It is treated as untrusted user-controlled data.
 
-The parser must:
+The prompt currently performs only a literal `{cwd}` substitution after successful deserialization.
 
-- reject malformed values safely;
-- avoid executing commands;
-- avoid arbitrary filesystem writes during parsing;
-- avoid following unexpected paths merely because they appear in configuration;
-- never interpret configuration as shell source.
+## Reuse decision
 
-## Reuse review
+The implementation uses the mature `toml` and `serde` Rust ecosystem rather than introducing a custom configuration parser. The selected crates must still be validated through Forge's CI and dependency review.
 
-Before implementing the format, the team must compare a small hand-rolled format against mature Rust TOML/serialization crates. The chosen dependency must pass the project's Reuse Before Reinvent review: license, maintenance, security, portability, performance, dependency cost, and replaceability.
+## Deferred
 
-## Deferred decisions
-
-The following are intentionally unresolved until the implementation review:
-
-- exact file name;
-- exact serialization crate(s);
-- complete setting schema;
-- environment-variable override naming;
+- additional settings;
+- environment-variable overrides;
 - command-line configuration flags;
 - project-local configuration;
-- configuration migrations/versioning.
+- configuration migrations/versioning;
+- executable startup configuration.
 
-No feature should depend on these unresolved details until the architecture review approves them.
+These remain separate architectural decisions and must pass the full LOOP before implementation.
