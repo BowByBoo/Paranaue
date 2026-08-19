@@ -6,3 +6,4 @@ description = "A small, native, extensible command shell built as the foundation
 license = "MIT"
 
 [dependencies]
+rustyline = "18.0.1"
