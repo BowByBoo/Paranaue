@@ -7,12 +7,14 @@ use serde::Deserialize;
 use crate::paths;
 
 #[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Config {
     #[serde(default)]
     pub ui: UiConfig,
 }
 
 #[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct UiConfig {
     /// Prompt template. `{cwd}` is replaced with the current working directory.
     pub prompt: Option<String>,
@@ -70,7 +72,13 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unknown_shape_without_panicking() {
+    fn rejects_unknown_settings_without_silently_ignoring_them() {
+        let result: Result<Config, _> = toml::from_str("[ui]\nunknown = true");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn rejects_wrong_setting_types_without_panicking() {
         let result: Result<Config, _> = toml::from_str("[ui]\nprompt = [\"not a string\"]");
         assert!(result.is_err());
     }
