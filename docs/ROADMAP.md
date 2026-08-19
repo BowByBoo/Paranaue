@@ -80,7 +80,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - `src/main.rs` and `lib.rs` were reviewed together to ensure the binary's help/version entry points are exported consistently.
 - Parser coverage explicitly includes empty input, whitespace separation, escaped quotes inside double quotes, and adjacent quoted/unquoted text. These tests are written but not yet execution-verified.
 - Shell tests cover current-directory initialization, relative navigation, invalid `cd` arity, missing directories, regular-file targets, and unknown commands. Temporary shell test paths now include a time-based nonce to reduce parallel-test collision risk. These tests are written but not yet execution-verified.
-- Process tests cover missing executables, invalid program names, exit status, working-directory propagation, and missing working directories. They are written but not yet execution-verified.
+- Process tests cover missing executables, invalid program names, exit status, working-directory propagation, and missing working directories. The missing-working-directory tests use a known platform command so they prove the working-directory precondition rather than conflating it with program lookup failure. These tests are written but not yet execution-verified.
 - The CLI now has executable-level smoke tests for help/version aliases, interactive `exit`, interactive help, and EOF. These tests are written but not yet execution-verified.
 - Configuration load errors are intentionally recoverable at shell startup: Forge reports a warning and falls back to defaults rather than becoming unusable because of a malformed user config.
 
@@ -96,6 +96,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Keep configuration file I/O injectable through an explicit path rather than mutating process-wide environment variables in tests.
 - Isolate temporary test paths from parallel collisions instead of relying on process ID alone.
 - Treat malformed or unreadable user configuration as a recoverable startup condition; preserve defaults and surface a warning.
+- Make the missing-working-directory process test use a known executable on each supported OS so the test isolates cwd validation from executable lookup.
 
 ## Reuse research already identified
 
