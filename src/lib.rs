@@ -164,7 +164,7 @@ impl Default for Shell {
     }
 }
 
-fn print_help() {
+pub fn print_help() {
     println!(
         "Commands:\n  help       Show this help\n  pwd        Print the current directory\n  cd <path>  Change the current directory\n  version    Show the Forge version\n  exit       Exit Forge\n\nAny other command is executed as a native process.\n\nThe interactive editor provides cursor movement and command history.\nQuotes and escapes are supported for arguments containing spaces."
     );
@@ -268,7 +268,10 @@ mod tests {
 
     #[test]
     fn parses_simple_arguments() {
-        assert_eq!(parse_words("echo hello world").unwrap(), ["echo", "hello", "world"]);
+        assert_eq!(
+            parse_words("echo hello world").unwrap(),
+            ["echo", "hello", "world"]
+        );
     }
 
     #[test]
