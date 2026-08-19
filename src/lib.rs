@@ -1,7 +1,10 @@
 use std::env;
-use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::io;
+use std::path::PathBuf;
 use std::process::Command;
+
+use rustyline::error::ReadlineError;
+use rustyline::DefaultEditor;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -16,23 +19,36 @@ impl Shell {
     }
 
     pub fn run(&mut self) -> io::Result<()> {
+        let mut editor = DefaultEditor::new()
+            .map_err(|error| io::Error::other(format!("failed to initialize line editor: {error}")))?;
+
         println!("Forge {VERSION}");
         println!("Type 'help' for help. Type 'exit' to quit.");
 
         loop {
-            print!("forge {}> ", self.current_dir.display());
-            io::stdout().flush()?;
+            let prompt = format!("forge {}> ", self.current_dir.display());
+            let input = match editor.readline(&prompt) {
+                Ok(input) => input,
+                Err(ReadlineError::Interrupted) => {
+                    println!();
+                    continue;
+                }
+                Err(ReadlineError::Eof) => {
+                    println!();
+                    break;
+                }
+                Err(error) => {
+                    return Err(io::Error::other(format!("line editor error: {error}")));
+                }
+            };
 
-            let mut input = String::new();
-            let bytes = io::stdin().read_line(&mut input)?;
-            if bytes == 0 {
-                println!();
-                break;
-            }
-
-            let input = input.trim_end_matches(['\r', '\n']).trim();
+            let input = input.trim();
             if input.is_empty() {
                 continue;
+            }
+
+            if let Err(error) = editor.add_history_entry(input) {
+                eprintln!("forge: warning: could not record history: {error}");
             }
 
             match self.execute(input) {
@@ -66,6 +82,12 @@ impl Shell {
                 Ok(true)
             }
             "cd" => {
+                if args.len() > 2 {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        "cd accepts at most one path argument",
+                    ));
+                }
                 self.change_directory(args.get(1).map(String::as_str))?;
                 Ok(true)
             }
@@ -144,7 +166,7 @@ impl Default for Shell {
 
 fn print_help() {
     println!(
-        "Commands:\n  help       Show this help\n  pwd        Print the current directory\n  cd <path>  Change the current directory\n  version    Show the Forge version\n  exit       Exit Forge\n\nAny other command is executed as a native process.\n\nQuotes are supported for arguments containing spaces."
+        "Commands:\n  help       Show this help\n  pwd        Print the current directory\n  cd <path>  Change the current directory\n  version    Show the Forge version\n  exit       Exit Forge\n\nAny other command is executed as a native process.\n\nThe interactive editor provides cursor movement and command history.\nQuotes and escapes are supported for arguments containing spaces."
     );
 }
 
@@ -240,11 +262,6 @@ fn home_directory() -> Option<PathBuf> {
     }
 }
 
-#[allow(dead_code)]
-fn _is_directory(path: &Path) -> bool {
-    path.is_dir()
-}
-
 #[cfg(test)]
 mod tests {
     use super::parse_words;
@@ -284,6 +301,9 @@ mod tests {
 
     #[test]
     fn handles_unicode() {
-        assert_eq!(parse_words("echo olá mundo 🌎").unwrap(), ["echo", "olá", "mundo", "🌎"]);
+        assert_eq!(
+            parse_words("echo olá mundo 🌎").unwrap(),
+            ["echo", "olá", "mundo", "🌎"]
+        );
     }
 }
