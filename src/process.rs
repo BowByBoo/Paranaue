@@ -92,9 +92,15 @@ mod tests {
     fn executes_in_the_requested_working_directory() {
         let base = std::env::temp_dir().join(format!("forge-process-test-{}", std::process::id()));
         std::fs::create_dir_all(&base).unwrap();
-        let args = vec!["-c".to_owned(), "pwd".to_owned()];
+        let expected = base.canonicalize().unwrap();
+        let args = vec![
+            "-c".to_owned(),
+            "test \"$PWD\" = \"$1\"".to_owned(),
+            "forge-cwd-check".to_owned(),
+            expected.display().to_string(),
+        ];
         let status = run("sh", &args, &base).expect("shell must execute");
-        assert!(status.success());
+        assert!(status.success(), "child process did not observe requested cwd");
         std::fs::remove_dir_all(base).unwrap();
     }
 
