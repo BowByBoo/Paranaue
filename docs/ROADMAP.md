@@ -71,20 +71,18 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Configuration defaults are overridden by the user configuration file. CLI/environment overrides are not yet implemented and must not be implied by documentation.
 - Unknown configuration settings are rejected rather than silently ignored.
 - A deterministic testing strategy is documented in `docs/TESTING.md`.
-- The current GitHub integration can write repository files, but a verified CI execution has not yet been observed. Therefore CI is not considered validated.
+- The current GitHub integration can write repository files, but no verified CI execution has been observed for the current main branch. Therefore CI is not considered validated.
 - `Cargo.lock` is currently only a generated header with no resolved packages. It must not be described as a verified reproducible dependency lock until a real Cargo resolution/build has populated and validated it.
-- The GitHub contents API rejected a process.rs update because the remote blob SHA did not match the write precondition. The file was re-read instead of force-overwriting it. A related test change was then applied safely to `src/lib.rs` using its current SHA.
-- A static review of the current entry points found a visibility mismatch: `src/main.rs` calls `forge::print_help`, while the library previously did not re-export that function. The mismatch was corrected by making the help entry point public and re-exporting it from `lib.rs`. This must be confirmed by a real Cargo build when CI is available.
+- A previous GitHub contents write was rejected because the remote blob SHA had changed; subsequent changes re-read the remote file before writing. This is now part of the safe-edit protocol.
+- `src/main.rs` and `lib.rs` were reviewed together to ensure the binary's help/version entry points are exported consistently.
 
 ### Decisions made in this loop
 
-- Reuse research continues to favor mature shell projects as behavioral references rather than copying implementation wholesale.
-- Native process tests should use deterministic commands supplied by the target OS (`true`/`false` on Unix and `cmd /C exit N` on Windows) rather than optional developer-installed programs.
-- Successful and nonzero process exit statuses now have explicit unit coverage on both supported OS families.
-- Do not claim those tests passed until Cargo or CI actually executes them.
-- A failed optimistic write must never be retried with a stale SHA; re-read the remote file and apply the smallest safe change.
-- Public CLI help has one library-owned entry point shared by the binary and library, avoiding duplicated help text and preventing a cross-module visibility failure.
-- The visibility correction is not considered a proven build fix until Cargo or CI compiles the project.
+- Keep the CI gate defined but do not treat an absent GitHub Actions run as a passing gate.
+- Do not create repeated no-op commits solely to provoke Actions.
+- Preserve the current small process API until integration evidence shows a real need for another abstraction.
+- Treat cross-module compile consistency as a required static review gate even when no executor is available.
+- Reconcile remote file SHA before every sequential GitHub contents update.
 
 ### Reuse research already identified
 
