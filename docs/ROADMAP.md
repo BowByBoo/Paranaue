@@ -74,6 +74,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - The current GitHub integration can write repository files, but a verified CI execution has not yet been observed. Therefore CI is not considered validated.
 - `Cargo.lock` is currently only a generated header with no resolved packages. It must not be described as a verified reproducible dependency lock until a real Cargo resolution/build has populated and validated it.
 - The GitHub contents API rejected a process.rs update because the remote blob SHA did not match the write precondition. The file was re-read instead of force-overwriting it. A related test change was then applied safely to `src/lib.rs` using its current SHA.
+- A static review of the current entry points found a visibility mismatch: `src/main.rs` calls `forge::print_help`, while the library previously did not re-export that function. The mismatch was corrected by making the help entry point public and re-exporting it from `lib.rs`. This must be confirmed by a real Cargo build when CI is available.
 
 ### Decisions made in this loop
 
@@ -82,6 +83,8 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Successful and nonzero process exit statuses now have explicit unit coverage on both supported OS families.
 - Do not claim those tests passed until Cargo or CI actually executes them.
 - A failed optimistic write must never be retried with a stale SHA; re-read the remote file and apply the smallest safe change.
+- Public CLI help has one library-owned entry point shared by the binary and library, avoiding duplicated help text and preventing a cross-module visibility failure.
+- The visibility correction is not considered a proven build fix until Cargo or CI compiles the project.
 
 ### Reuse research already identified
 
