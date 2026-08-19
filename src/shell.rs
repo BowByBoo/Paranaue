@@ -19,7 +19,14 @@ impl Shell {
     }
 
     pub fn run(&mut self) -> io::Result<()> {
-        self.config = config::Config::load()?;
+        match config::Config::load() {
+            Ok(config) => self.config = config,
+            Err(error) => {
+                eprintln!("forge: warning: could not load configuration: {error}");
+                self.config = config::Config::default();
+            }
+        }
+
         let mut editor = DefaultEditor::new().map_err(|error| io::Error::other(format!("failed to initialize line editor: {error}")))?;
         if let Err(error) = history::load(&mut editor) { eprintln!("forge: warning: {error}"); }
         println!("Forge {VERSION}");
