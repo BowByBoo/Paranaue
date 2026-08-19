@@ -35,6 +35,7 @@ This roadmap is the project's durable engineering memory. Every architectural lo
 - [x] Modular shell/parser/process/history boundaries
 - [x] Initial process-execution error tests
 - [x] Reuse Before Reinvent policy
+- [x] Centralized platform-aware user-state path boundary
 
 ## Current LOOP — reliability before language expansion
 
@@ -58,9 +59,10 @@ The project is **not yet declared usable**. The current loop is focused on provi
 
 - The current parser intentionally supports only words, quotes, and escapes. Operators are blocked until a grammar and semantic model are designed.
 - Native process execution is deliberately isolated from future shell-language features.
-- Persistent history is opt-out and uses platform-appropriate user state locations; Unix history files are private 0600 files.
+- Persistent history is opt-out and uses a centralized platform-aware user-state boundary; Unix history files are private 0600 files.
 - The current GitHub integration can write repository files, but a verified CI execution has not yet been observed for the current main branch. Therefore CI is not considered validated.
 - The project must not claim reproducible release builds until Cargo dependency resolution and the lockfile have been verified by a real build.
+- Configuration is not yet implemented. The path boundary exists specifically to avoid coupling future configuration, history, and other persistent state to ad-hoc platform environment logic.
 
 ### Decisions made in this loop
 
@@ -71,6 +73,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - `Ctrl+C` interrupts the current input line rather than terminating the entire Forge session; EOF exits the session.
 - The terminal emulator is explicitly outside the v0.1 product boundary.
 - Substantial infrastructure must pass the Reuse Before Reinvent review before Forge implements it from scratch.
+- Forge now has a small `paths` boundary for platform-aware user state. A configuration dependency is not being added yet because its precedence and file format have not been architecturally approved.
 
 ### Reuse research already identified
 
@@ -78,6 +81,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - ReShell is useful as a reference for separating parser, checker, runtime, builtins, and REPL responsibilities.
 - DataDog rshell is worth studying for security and capability-oriented execution ideas, while recognizing that its product goals differ from Forge.
 - Conch is useful as a reference for project organization, packaging, and cross-platform engineering.
+- The `directories` Rust crate (6.0.0) provides cross-platform application config/data/state locations through `ProjectDirs`; it is a strong candidate for a future configuration boundary, but has not been adopted yet because Forge first needs a clear configuration contract. citeturn0search1turn0search4
 
 These projects are references, not automatic dependencies. Each future adoption decision requires its own license, maintenance, security, portability, performance, and architectural review.
 
