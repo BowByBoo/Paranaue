@@ -62,12 +62,16 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Native process execution is deliberately isolated from future shell-language features.
 - Persistent history is opt-out and uses a centralized platform-aware user-state boundary; Unix history files are private 0600 files.
 - The current GitHub integration can write repository files, but a verified CI execution has not yet been observed for the current main branch. Therefore CI is not considered validated.
-- The project must not claim reproducible release builds until Cargo dependency resolution and the lockfile have been verified by a real build.
+- `Cargo.lock` is currently only a generated header with no resolved packages. It must not be described as a verified reproducible dependency lock until a real Cargo resolution/build has populated and validated it.
+- The CI workflow currently regenerates the lockfile in the runner before quality gates. This proves dependency resolution is possible during CI, but it does not by itself make the repository lockfile reproducible; that distinction remains explicit.
 - Configuration is not implemented yet. Its architecture is documented separately in `docs/CONFIGURATION.md`.
+- No shell-language operators are being implemented until their grammar and semantics have received a full architectural review.
 
 ### Decisions made in this loop
 
-- The command `match` remains intentionally small; a command-registry abstraction is deferred until there is a second implementation pressure that justifies it.
+- Do not manually fabricate or partially reconstruct `Cargo.lock`. A real Cargo resolution must produce it; the resulting lockfile will then be reviewed and committed as a coherent change.
+- Do not treat a workflow definition as evidence of a successful build. CI is validated only by an observed successful run on the relevant commit.
+- Do not introduce an executor trait merely to make process tests easier while there is only one process implementation. Prefer integration tests or a second real implementation pressure before adding that abstraction.
 - Process execution remains an OS-native boundary. Pipes, redirection, chaining, expansion, globbing, and job control do not belong in this layer.
 - The shell parser currently understands only words, quotes, and escapes. Operators require a separately designed grammar before implementation.
 - Persistent history is opt-out and is stored using platform-appropriate user state locations. On Unix, the history file is created with private 0600 permissions.
