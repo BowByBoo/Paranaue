@@ -1,0 +1,8 @@
+[package]
+name = "forge"
+version = "0.1.0"
+edition = "2024"
+description = "A small, native, extensible command shell built as the foundation of the Forge computing project."
+license = "MIT"
+
+[dependencies]
