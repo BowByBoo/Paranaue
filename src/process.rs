@@ -90,7 +90,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn executes_in_the_requested_working_directory() {
-        let base = std::env::temp_dir().join(format!("forge-process-test-{}", std::process::id()));
+        let base = unique_temp_path("forge-process-cwd");
         std::fs::create_dir_all(&base).unwrap();
         let expected = base.canonicalize().unwrap();
         let args = vec![
@@ -106,9 +106,20 @@ mod tests {
 
     #[test]
     fn rejects_a_missing_working_directory_before_launching() {
-        let missing = std::env::temp_dir().join(format!("forge-missing-cwd-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&missing);
+        let missing = unique_temp_path("forge-missing-cwd");
         let result = run("forge-test-command-that-must-not-exist-7c4b1d9e", &[], &missing);
         assert!(result.is_err());
+    }
+
+    fn unique_temp_path(prefix: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("{prefix}-{}-{}", std::process::id(), unique_nonce()))
+    }
+
+    fn unique_nonce() -> u128 {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock must be after the Unix epoch")
+            .as_nanos()
     }
 }
