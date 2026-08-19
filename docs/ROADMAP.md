@@ -6,7 +6,7 @@ This roadmap is intentionally capability-driven rather than date-driven.
 
 - [x] Native Rust application
 - [x] Interactive line editing
-- [x] Session command history
+- [x] Persistent command history with opt-out
 - [x] Built-in help
 - [x] Built-in version
 - [x] Working-directory navigation
@@ -14,32 +14,39 @@ This roadmap is intentionally capability-driven rather than date-driven.
 - [x] Structured argument parsing for words, quotes, and escapes
 - [x] Actionable command errors
 - [x] Unit tests for parser edge cases
-- [x] CI quality gate
+- [x] Cross-platform CI quality gate
 - [x] Architecture documentation
+- [x] Modular shell/parser/process/history boundaries
 
-## Next architectural loop
+## Current architectural loop
 
-Before implementing these, revisit the architecture with the full review loop:
+Before implementing shell language features, complete the reliability work:
 
-- [ ] persistent configuration model
-- [ ] persistent history policy
-- [ ] command registry abstraction
-- [ ] integration tests for process execution
-- [ ] cross-platform CI matrix
-- [ ] installation/package strategy
-- [ ] shell operator design
+- [ ] deterministic process-execution integration tests
+- [ ] release/installation strategy
+- [ ] configuration model and precedence rules
+- [ ] command registry design
+- [ ] exit-status model
+- [ ] security review of environment and process inheritance
+- [ ] UX review of prompt and diagnostics
+- [ ] reproducible lockfile committed after a verified dependency resolution
 
-## Later — only after architectural approval
+## Shell language — architectural approval required
 
+- [ ] operator grammar
 - [ ] pipes
-- [ ] redirection
+- [ ] input/output redirection
 - [ ] command chaining
 - [ ] environment expansion
 - [ ] globbing
-- [ ] job control
+- [ ] background jobs and job control
+
+## Later — only after architectural approval
+
 - [ ] completion
 - [ ] plugins
 - [ ] scripting
 - [ ] Git-aware tooling
+- [ ] terminal emulator
 
-No item in the later section is a promise. Each must earn its place through user value, technical feasibility, security review, and maintainability.
+No item in the later sections is a promise. Each must earn its place through user value, technical feasibility, security review, platform testing, and maintainability.
