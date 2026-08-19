@@ -41,6 +41,7 @@ This roadmap is the project's durable engineering memory. Every architectural lo
 - [x] Separate configuration and persistent-state paths
 - [x] Unknown configuration settings rejected explicitly
 - [x] Configuration contract documented
+- [x] Deterministic testing strategy documented
 
 ## Current LOOP — reliability before language expansion
 
@@ -68,17 +69,19 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Configuration is declarative TOML and currently supports only `[ui].prompt`; it never executes commands.
 - Configuration defaults are overridden by the user configuration file. CLI/environment overrides are not yet implemented and must not be implied by documentation.
 - Unknown configuration settings are rejected rather than silently ignored.
+- A deterministic testing strategy is now documented in `docs/TESTING.md`.
 - The current GitHub integration can write repository files, but a verified CI execution has not yet been observed. Therefore CI is not considered validated.
 - `Cargo.lock` is currently only a generated header with no resolved packages. It must not be described as a verified reproducible dependency lock until a real Cargo resolution/build has populated and validated it.
 
 ### Decisions made in this loop
 
-- Use the mature `toml` + `serde` ecosystem for declarative configuration instead of creating a custom configuration parser. Current research found `toml 1.1.4` and `serde 1.0.229`; both remain subject to CI/license/dependency review. citeturn1search2turn1search0
-- Keep configuration separate from persistent state. The current platform mapping is implemented explicitly; a future adoption of `directories::ProjectDirs` remains an option if it reduces maintenance without hiding Forge's required semantics. The crate documents platform-specific config/state locations for Linux, Windows and macOS. citeturn0search2turn0search9
+- Use the mature `toml` + `serde` ecosystem for declarative configuration instead of creating a custom configuration parser.
+- Keep configuration separate from persistent state. A future adoption of `directories::ProjectDirs` remains an option if it reduces maintenance without hiding Forge's required semantics.
 - Configuration is data, not startup code. No aliases, functions, plugins, or arbitrary execution hooks belong in v0.1 configuration.
 - Unknown configuration fields are errors to prevent silent typos and accidental false configuration.
+- Tests must be deterministic and must not depend on network access or optional developer-installed programs.
+- CI is evidence only when an actual workflow run succeeds; a workflow YAML file alone is never proof.
 - Do not manually fabricate or partially reconstruct `Cargo.lock`. A real Cargo resolution must produce it.
-- Do not treat a workflow definition as evidence of a successful build. CI is validated only by an observed successful run on the relevant commit.
 - Do not introduce an executor trait merely to make process tests easier while there is only one process implementation.
 - Process execution remains an OS-native boundary. Pipes, redirection, chaining, expansion, globbing, and job control do not belong in this layer.
 - The terminal emulator remains explicitly outside the v0.1 product boundary.
