@@ -58,7 +58,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - [x] Add shell navigation invariant tests for current-directory initialization, relative `cd`, and invalid `cd` arity.
 - [x] Add shell error-path tests for missing directories, regular-file targets, and unknown commands.
 - [ ] UX review of prompt, diagnostics, interruption, and EOF behavior.
-- [ ] Configuration integration tests, including malformed and unknown settings.
+- [x] Configuration integration tests for missing, valid, malformed, and unknown settings using explicit test paths.
 - [ ] Clean-machine installation smoke test.
 - [ ] Release and installation strategy for a clean machine.
 - [ ] Red Team review of the complete current codebase.
@@ -72,6 +72,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Configuration is declarative TOML and currently supports only `[ui].prompt`; it never executes commands.
 - Configuration defaults are overridden by the user configuration file. CLI/environment overrides are not yet implemented and must not be implied by documentation.
 - Unknown configuration settings are rejected rather than silently ignored.
+- Configuration loading now has an explicit-path boundary, allowing deterministic file-loading tests without mutating the user's real environment.
 - A deterministic testing strategy is documented in `docs/TESTING.md`.
 - The current GitHub integration can write repository files, but no verified CI execution has been observed for the current main branch. Therefore CI is not considered validated.
 - `Cargo.lock` is currently only a generated header with no resolved packages. It must not be described as a verified reproducible dependency lock until a real Cargo resolution/build has populated and validated it.
@@ -79,6 +80,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - `src/main.rs` and `lib.rs` were reviewed together to ensure the binary's help/version entry points are exported consistently.
 - Parser coverage explicitly includes empty input, whitespace separation, escaped quotes inside double quotes, and adjacent quoted/unquoted text. These tests are written but not yet execution-verified.
 - Shell tests cover current-directory initialization, relative navigation, invalid `cd` arity, missing directories, regular-file targets, and unknown commands. These tests are written but not yet execution-verified.
+- Process tests cover missing executables, invalid program names, exit status, working-directory propagation, and missing working directories. They are written but not yet execution-verified.
 
 ### Decisions made in this loop
 
@@ -89,6 +91,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Reconcile remote file SHA before every sequential GitHub contents update.
 - Expand parser and shell tests before expanding shell semantics; this reduces regression risk without prematurely committing Forge to shell-operator behavior.
 - Keep `Shell::execute` private; test public behavior boundaries through small in-module invariants rather than exposing internals as a testing convenience.
+- Keep configuration file I/O injectable through an explicit path rather than mutating process-wide environment variables in tests.
 
 ## Reuse research already identified
 
