@@ -36,6 +36,7 @@ This roadmap is the project's durable engineering memory. Every architectural lo
 - [x] Initial process-execution error tests
 - [x] Reuse Before Reinvent policy
 - [x] Centralized platform-aware user-state path boundary
+- [x] Configuration architecture proposal documented before implementation
 
 ## Current LOOP — reliability before language expansion
 
@@ -47,7 +48,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - [ ] Deterministic process-execution integration tests.
 - [ ] Verify the dependency lockfile after a real Cargo resolution/build.
 - [ ] Release and installation strategy for a clean machine.
-- [ ] Configuration model and precedence rules.
+- [ ] Implement the approved configuration model and precedence rules.
 - [ ] Explicit exit-status model and semantics.
 - [ ] Security review of environment and process inheritance.
 - [ ] UX review of prompt, diagnostics, interruption, and EOF behavior.
@@ -62,7 +63,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Persistent history is opt-out and uses a centralized platform-aware user-state boundary; Unix history files are private 0600 files.
 - The current GitHub integration can write repository files, but a verified CI execution has not yet been observed for the current main branch. Therefore CI is not considered validated.
 - The project must not claim reproducible release builds until Cargo dependency resolution and the lockfile have been verified by a real build.
-- Configuration is not yet implemented. The path boundary exists specifically to avoid coupling future configuration, history, and other persistent state to ad-hoc platform environment logic.
+- Configuration is not implemented yet. Its architecture is documented separately in `docs/CONFIGURATION.md`.
 
 ### Decisions made in this loop
 
@@ -73,15 +74,18 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - `Ctrl+C` interrupts the current input line rather than terminating the entire Forge session; EOF exits the session.
 - The terminal emulator is explicitly outside the v0.1 product boundary.
 - Substantial infrastructure must pass the Reuse Before Reinvent review before Forge implements it from scratch.
-- Forge now has a small `paths` boundary for platform-aware user state. A configuration dependency is not being added yet because its precedence and file format have not been architecturally approved.
+- Forge has a small `paths` boundary for platform-aware user state. Configuration must have its own configuration location rather than reusing state paths.
+- Forge v0.1 configuration will be declarative rather than executable. Startup configuration will not be a hidden scripting engine.
+- The initial configuration precedence is intended to be built-in defaults, then user configuration, then explicitly documented command-line/environment overrides. Project-local configuration is deferred until a trust model exists.
 
 ### Reuse research already identified
 
-- Brush is a mature Rust shell implementation worth studying for parser/runtime separation, interactive behavior, testing, and platform concerns.
+- Brush is a mature Rust shell implementation worth studying for parser/runtime separation, interactive behavior, testing, configuration, and platform concerns.
 - ReShell is useful as a reference for separating parser, checker, runtime, builtins, and REPL responsibilities.
 - DataDog rshell is worth studying for security and capability-oriented execution ideas, while recognizing that its product goals differ from Forge.
 - Conch is useful as a reference for project organization, packaging, and cross-platform engineering.
-- The `directories` Rust crate (6.0.0) provides cross-platform application config/data/state locations through `ProjectDirs`; it is a strong candidate for a future configuration boundary, but has not been adopted yet because Forge first needs a clear configuration contract. citeturn0search1turn0search4
+- The `directories` Rust crate provides cross-platform application config/data/state locations and remains a candidate for the future configuration boundary; it has not been adopted yet.
+- Nushell and fish demonstrate mature configuration systems with user configuration, platform-aware paths, and startup ordering. Forge is deliberately not copying their executable-configuration model for v0.1 because it would couple configuration to an as-yet undefined shell language.
 
 These projects are references, not automatic dependencies. Each future adoption decision requires its own license, maintenance, security, portability, performance, and architectural review.
 
