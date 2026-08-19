@@ -103,9 +103,14 @@ fn home_directory() -> Option<PathBuf> {
 mod tests {
     use super::Shell;
     use std::{env, fs, io};
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     fn temp_test_path(name: &str) -> std::path::PathBuf {
-        env::temp_dir().join(format!("forge-shell-{name}-{}", std::process::id()))
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock must be after the Unix epoch")
+            .as_nanos();
+        env::temp_dir().join(format!("forge-shell-{name}-{}-{nonce}", std::process::id()))
     }
 
     #[test]
@@ -127,7 +132,6 @@ mod tests {
     fn change_directory_uses_relative_paths_from_shell_directory() {
         let base = temp_test_path("relative");
         let child = base.join("child");
-        let _ = fs::remove_dir_all(&base);
         fs::create_dir_all(&child).unwrap();
         let mut shell = Shell::new();
         shell.current_dir = base.clone();
@@ -140,7 +144,6 @@ mod tests {
     fn change_directory_reports_missing_path() {
         let mut shell = Shell::new();
         let missing = temp_test_path("missing");
-        let _ = fs::remove_dir_all(&missing);
         let error = shell.change_directory(Some(missing.to_str().unwrap())).unwrap_err();
         assert_eq!(error.kind(), io::ErrorKind::NotFound);
     }
@@ -148,7 +151,6 @@ mod tests {
     #[test]
     fn change_directory_rejects_a_regular_file() {
         let path = temp_test_path("file");
-        let _ = fs::remove_file(&path);
         fs::write(&path, b"not a directory").unwrap();
         let mut shell = Shell::new();
         let error = shell.change_directory(Some(path.to_str().unwrap())).unwrap_err();
