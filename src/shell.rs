@@ -48,8 +48,10 @@ impl Shell {
                 continue;
             }
 
-            if let Err(error) = editor.add_history_entry(input) {
-                eprintln!("forge: warning: could not record history: {error}");
+            if history::enabled() {
+                if let Err(error) = editor.add_history_entry(input) {
+                    eprintln!("forge: warning: could not record history: {error}");
+                }
             }
 
             match self.execute(input) {
@@ -144,7 +146,7 @@ impl Default for Shell {
 
 fn print_help() {
     println!(
-        "Commands:\n  help       Show this help\n  pwd        Print the current directory\n  cd <path>  Change the current directory\n  version    Show the Forge version\n  exit       Exit Forge\n\nAny other command is executed as a native process.\n\nThe interactive editor provides cursor movement and persistent command history.\nQuotes and escapes are supported for arguments containing spaces."
+        "Commands:\n  help       Show this help\n  pwd        Print the current directory\n  cd <path>  Change the current directory\n  version    Show the Forge version\n  exit       Exit Forge\n\nAny other command is executed as a native process.\n\nThe interactive editor provides cursor movement and persistent command history.\nSet FORGE_NO_HISTORY=1 to disable history persistence.\nQuotes and escapes are supported for arguments containing spaces."
     );
 }
 
