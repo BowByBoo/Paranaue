@@ -51,6 +51,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 
 - [ ] Obtain and verify a real CI run on the current main branch.
 - [ ] Commit and verify a real Cargo-resolved dependency lockfile.
+- [x] Add deterministic unit coverage for successful and nonzero native process exit statuses on supported operating systems.
 - [ ] Deterministic process-execution integration tests.
 - [ ] Explicit exit-status model and semantics.
 - [ ] Security review of environment and process inheritance.
@@ -69,22 +70,18 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Configuration is declarative TOML and currently supports only `[ui].prompt`; it never executes commands.
 - Configuration defaults are overridden by the user configuration file. CLI/environment overrides are not yet implemented and must not be implied by documentation.
 - Unknown configuration settings are rejected rather than silently ignored.
-- A deterministic testing strategy is now documented in `docs/TESTING.md`.
+- A deterministic testing strategy is documented in `docs/TESTING.md`.
 - The current GitHub integration can write repository files, but a verified CI execution has not yet been observed. Therefore CI is not considered validated.
 - `Cargo.lock` is currently only a generated header with no resolved packages. It must not be described as a verified reproducible dependency lock until a real Cargo resolution/build has populated and validated it.
+- The GitHub contents API rejected a process.rs update because the remote blob SHA did not match the write precondition. The file was re-read instead of force-overwriting it. A related test change was then applied safely to `src/lib.rs` using its current SHA.
 
 ### Decisions made in this loop
 
-- Use the mature `toml` + `serde` ecosystem for declarative configuration instead of creating a custom configuration parser.
-- Keep configuration separate from persistent state. A future adoption of `directories::ProjectDirs` remains an option if it reduces maintenance without hiding Forge's required semantics.
-- Configuration is data, not startup code. No aliases, functions, plugins, or arbitrary execution hooks belong in v0.1 configuration.
-- Unknown configuration fields are errors to prevent silent typos and accidental false configuration.
-- Tests must be deterministic and must not depend on network access or optional developer-installed programs.
-- CI is evidence only when an actual workflow run succeeds; a workflow YAML file alone is never proof.
-- Do not manually fabricate or partially reconstruct `Cargo.lock`. A real Cargo resolution must produce it.
-- Do not introduce an executor trait merely to make process tests easier while there is only one process implementation.
-- Process execution remains an OS-native boundary. Pipes, redirection, chaining, expansion, globbing, and job control do not belong in this layer.
-- The terminal emulator remains explicitly outside the v0.1 product boundary.
+- Reuse research continues to favor mature shell projects as behavioral references rather than copying implementation wholesale.
+- Native process tests should use deterministic commands supplied by the target OS (`true`/`false` on Unix and `cmd /C exit N` on Windows) rather than optional developer-installed programs.
+- Successful and nonzero process exit statuses now have explicit unit coverage on both supported OS families.
+- Do not claim those tests passed until Cargo or CI actually executes them.
+- A failed optimistic write must never be retried with a stale SHA; re-read the remote file and apply the smallest safe change.
 
 ### Reuse research already identified
 
