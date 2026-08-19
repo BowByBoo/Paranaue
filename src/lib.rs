@@ -6,7 +6,7 @@ mod process;
 mod shell;
 
 pub use parser::parse_words;
-pub use shell::Shell;
+pub use shell::{print_help, Shell};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
