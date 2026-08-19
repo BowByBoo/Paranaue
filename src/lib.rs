@@ -77,6 +77,15 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
+    fn parsed_arguments_reach_native_process_without_reinterpretation() {
+        let args = parse_words("printf '%s' 'hello world'").unwrap();
+        let status = process::run(&args[0], &args[1..], Path::new("."))
+            .expect("printf should execute on Unix");
+        assert!(status.success());
+    }
+
+    #[cfg(unix)]
+    #[test]
     fn native_process_success_is_observable() {
         let status = process::run("true", &[], Path::new("."))
             .expect("the platform-provided true command should execute");
