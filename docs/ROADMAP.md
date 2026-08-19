@@ -1,6 +1,6 @@
 # Forge Roadmap
 
-This roadmap is the project's durable engineering memory. Every architectural loop must update it before moving on. Dates are deliberately avoided; quality and evidence determine progression.
+This roadmap is the project's durable engineering memory. Every architectural loop must update it before moving on. Quality and evidence determine progression.
 
 ## Product contract
 
@@ -36,7 +36,11 @@ This roadmap is the project's durable engineering memory. Every architectural lo
 - [x] Initial process-execution error tests
 - [x] Reuse Before Reinvent policy
 - [x] Centralized platform-aware user-state path boundary
-- [x] Configuration architecture proposal documented before implementation
+- [x] Configuration architecture proposal
+- [x] Declarative TOML configuration implementation
+- [x] Separate configuration and persistent-state paths
+- [x] Unknown configuration settings rejected explicitly
+- [x] Configuration contract documented
 
 ## Current LOOP — reliability before language expansion
 
@@ -45,57 +49,55 @@ The project is **not yet declared usable**. The current loop is focused on provi
 ### In progress
 
 - [ ] Obtain and verify a real CI run on the current main branch.
+- [ ] Commit and verify a real Cargo-resolved dependency lockfile.
 - [ ] Deterministic process-execution integration tests.
-- [ ] Verify the dependency lockfile after a real Cargo resolution/build.
-- [ ] Release and installation strategy for a clean machine.
-- [ ] Implement the approved configuration model and precedence rules.
 - [ ] Explicit exit-status model and semantics.
 - [ ] Security review of environment and process inheritance.
 - [ ] UX review of prompt, diagnostics, interruption, and EOF behavior.
+- [ ] Configuration integration tests, including malformed and unknown settings.
 - [ ] Clean-machine installation smoke test.
+- [ ] Release and installation strategy for a clean machine.
 - [ ] Red Team review of the complete current codebase.
 - [ ] Research mature shell projects and crates before expanding the shell language.
 
 ### Current observations
 
-- The current parser intentionally supports only words, quotes, and escapes. Operators are blocked until a grammar and semantic model are designed.
+- The parser intentionally supports only words, quotes, and escapes. Operators are blocked until a grammar and semantic model are designed.
 - Native process execution is deliberately isolated from future shell-language features.
 - Persistent history is opt-out and uses a centralized platform-aware user-state boundary; Unix history files are private 0600 files.
-- The current GitHub integration can write repository files, but a verified CI execution has not yet been observed for the current main branch. Therefore CI is not considered validated.
+- Configuration is declarative TOML and currently supports only `[ui].prompt`; it never executes commands.
+- Configuration defaults are overridden by the user configuration file. CLI/environment overrides are not yet implemented and must not be implied by documentation.
+- Unknown configuration settings are rejected rather than silently ignored.
+- The current GitHub integration can write repository files, but a verified CI execution has not yet been observed. Therefore CI is not considered validated.
 - `Cargo.lock` is currently only a generated header with no resolved packages. It must not be described as a verified reproducible dependency lock until a real Cargo resolution/build has populated and validated it.
-- The CI workflow currently regenerates the lockfile in the runner before quality gates. This proves dependency resolution is possible during CI, but it does not by itself make the repository lockfile reproducible; that distinction remains explicit.
-- Configuration is not implemented yet. Its architecture is documented separately in `docs/CONFIGURATION.md`.
-- No shell-language operators are being implemented until their grammar and semantics have received a full architectural review.
 
 ### Decisions made in this loop
 
-- Do not manually fabricate or partially reconstruct `Cargo.lock`. A real Cargo resolution must produce it; the resulting lockfile will then be reviewed and committed as a coherent change.
+- Use the mature `toml` + `serde` ecosystem for declarative configuration instead of creating a custom configuration parser. Current research found `toml 1.1.4` and `serde 1.0.229`; both remain subject to CI/license/dependency review. citeturn1search2turn1search0
+- Keep configuration separate from persistent state. The current platform mapping is implemented explicitly; a future adoption of `directories::ProjectDirs` remains an option if it reduces maintenance without hiding Forge's required semantics. The crate documents platform-specific config/state locations for Linux, Windows and macOS. citeturn0search2turn0search9
+- Configuration is data, not startup code. No aliases, functions, plugins, or arbitrary execution hooks belong in v0.1 configuration.
+- Unknown configuration fields are errors to prevent silent typos and accidental false configuration.
+- Do not manually fabricate or partially reconstruct `Cargo.lock`. A real Cargo resolution must produce it.
 - Do not treat a workflow definition as evidence of a successful build. CI is validated only by an observed successful run on the relevant commit.
-- Do not introduce an executor trait merely to make process tests easier while there is only one process implementation. Prefer integration tests or a second real implementation pressure before adding that abstraction.
+- Do not introduce an executor trait merely to make process tests easier while there is only one process implementation.
 - Process execution remains an OS-native boundary. Pipes, redirection, chaining, expansion, globbing, and job control do not belong in this layer.
-- The shell parser currently understands only words, quotes, and escapes. Operators require a separately designed grammar before implementation.
-- Persistent history is opt-out and is stored using platform-appropriate user state locations. On Unix, the history file is created with private 0600 permissions.
-- `Ctrl+C` interrupts the current input line rather than terminating the entire Forge session; EOF exits the session.
-- The terminal emulator is explicitly outside the v0.1 product boundary.
-- Substantial infrastructure must pass the Reuse Before Reinvent review before Forge implements it from scratch.
-- Forge has a small `paths` boundary for platform-aware user state. Configuration must have its own configuration location rather than reusing state paths.
-- Forge v0.1 configuration will be declarative rather than executable. Startup configuration will not be a hidden scripting engine.
-- The initial configuration precedence is intended to be built-in defaults, then user configuration, then explicitly documented command-line/environment overrides. Project-local configuration is deferred until a trust model exists.
+- The terminal emulator remains explicitly outside the v0.1 product boundary.
 
 ### Reuse research already identified
 
-- Brush is a mature Rust shell implementation worth studying for parser/runtime separation, interactive behavior, testing, configuration, and platform concerns.
-- ReShell is useful as a reference for separating parser, checker, runtime, builtins, and REPL responsibilities.
-- DataDog rshell is worth studying for security and capability-oriented execution ideas, while recognizing that its product goals differ from Forge.
-- Conch is useful as a reference for project organization, packaging, and cross-platform engineering.
-- The `directories` Rust crate provides cross-platform application config/data/state locations and remains a candidate for the future configuration boundary; it has not been adopted yet.
-- Nushell and fish demonstrate mature configuration systems with user configuration, platform-aware paths, and startup ordering. Forge is deliberately not copying their executable-configuration model for v0.1 because it would couple configuration to an as-yet undefined shell language.
+- Brush: reference for parser/runtime separation, interactive behavior, testing, configuration, and platform concerns.
+- ReShell: reference for parser/checker/runtime/builtins/REPL separation.
+- DataDog rshell: reference for security and capability-oriented execution ideas, with different product goals.
+- Conch: reference for project organization, packaging, and cross-platform engineering.
+- `directories`: candidate for future platform path handling; not adopted yet.
+- Nushell and fish: references for mature configuration and startup ordering; Forge deliberately avoids executable startup configuration for v0.1.
+- `toml` + `serde`: selected for the current declarative configuration implementation after reuse review at the design level.
 
 These projects are references, not automatic dependencies. Each future adoption decision requires its own license, maintenance, security, portability, performance, and architectural review.
 
 ## Shell language — architectural approval required
 
-These features remain blocked until the grammar, semantics, security model, UX, portability, and tests have been reviewed by the full LOOP.
+These features remain blocked until grammar, semantics, security model, UX, portability, and tests have been reviewed by the full LOOP.
 
 - [ ] operator grammar
 - [ ] pipes
@@ -128,13 +130,13 @@ Forge v0.1 may be called **usable** only when all of the following are true:
 - [ ] process failures are understandable and recoverable
 - [ ] filesystem navigation is reliable across supported platforms
 - [ ] history behavior is documented and safe
-- [ ] configuration behavior is documented
+- [ ] configuration behavior is documented and tested
 - [ ] installation works on a clean supported machine
 - [ ] release artifact can be identified and reproduced
 - [ ] security review has no unresolved high-severity findings
 - [ ] Red Team has attempted to break the MVP
 - [ ] UX review has no known critical usability failures
-- [ ] documentation matches the shipped behavior
+- [ ] documentation matches shipped behavior
 - [ ] architecture review finds no known severe foundational flaw
 
 Until these gates are met, the status remains **IN DEVELOPMENT**.
