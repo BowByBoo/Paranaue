@@ -1,3 +1,4 @@
+mod config;
 mod history;
 mod parser;
 mod paths;
