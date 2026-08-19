@@ -65,6 +65,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - [ ] Research mature shell projects and crates before expanding the shell language.
 - [x] Red Team audit of parser state/error boundaries completed; no shell operators or expansion semantics added.
 - [ ] Parser fuzz/property testing strategy.
+- [x] Ctrl+C/interrupt architecture research completed; no premature signal dependency added.
 
 ### Current observations
 
@@ -81,12 +82,14 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - A previous GitHub contents write was rejected because the remote blob SHA had changed; subsequent changes re-read the remote file before writing. This is now part of the safe-edit protocol.
 - `src/main.rs` and `lib.rs` were reviewed together to ensure the binary's help/version entry points are exported consistently.
 - Parser coverage explicitly includes empty input, whitespace separation, escaped quotes inside double quotes, and adjacent quoted/unquoted text. These tests are written but not yet execution-verified.
-- Shell tests cover current-directory initialization, relative navigation, invalid `cd` arity, missing directories, regular-file targets, and unknown commands. Temporary shell test paths now include a time-based nonce to reduce parallel-test collision risk. These tests are written but not yet execution-verified.
+- Shell tests cover current-directory initialization, relative `cd`, invalid `cd` arity, missing directories, regular-file targets, and unknown commands. Temporary shell test paths now include a time-based nonce to reduce parallel-test collision risk. These tests are written but not yet execution-verified.
 - Process tests cover missing executables, invalid program names, exit status, working-directory propagation, and missing working directories. The missing-working-directory tests use a known platform command so they prove the working-directory precondition rather than conflating it with program lookup failure. These tests are written but not yet execution-verified.
 - The CLI now has executable-level smoke tests for help/version aliases, interactive `exit`, interactive help, and EOF. These tests are written but not yet execution-verified.
 - Configuration load errors are intentionally recoverable at shell startup: Forge reports a warning and falls back to defaults rather than becoming unusable because of a malformed user config.
 - Parser review found no need to broaden grammar during this loop. The implementation remains a deliberately small state machine with explicit errors for unfinished escapes and unterminated quotes.
 - Parser syntax is not yet a stable promise beyond words, quotes, and escapes; future operators must not be bolted onto this tokenizer without an explicit grammar design.
+- `Shell::run` treats Ctrl+C while idle as an input interruption and continues the REPL. A child process is launched synchronously through `Command::status`, so the exact foreground-signal behavior while a child is running is an OS/process-group concern and is not yet a promised Forge semantic.
+- Research of the maintained `ctrlc` crate confirms it provides cross-platform Ctrl+C handlers, but installing a global handler would overwrite Unix signal dispositions and does not by itself establish correct child process-group/job-control semantics. It is therefore not being added merely to make the Ctrl+C box look complete. citeturn0search0turn0search1
 
 ### Decisions made in this loop
 
@@ -102,6 +105,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - Treat malformed or unreadable user configuration as a recoverable startup condition; preserve defaults and surface a warning.
 - Do not add shell operators, expansion, globbing, or scripting during parser hardening; establish the grammar and semantic model first.
 - Parser hardening did not reveal a justified semantic expansion; preserve the small state-machine boundary until property/fuzz testing provides evidence for further changes.
+- Do not add a Ctrl+C library solely for interactive interruption. Correct child interruption requires an explicit process-group/signal contract, cross-platform tests, and a decision about future job control. A dependency can be adopted later if it is part of that complete design.
 
 ## Reuse research already identified
 
@@ -112,6 +116,7 @@ The project is **not yet declared usable**. The current loop is focused on provi
 - `directories`: candidate for future platform path handling; not adopted yet.
 - Nushell and fish: references for mature configuration and startup ordering; Forge deliberately avoids executable startup configuration for v0.1.
 - `toml` + `serde`: selected for the current declarative configuration implementation after reuse review at the design level.
+- `ctrlc` 3.5.x: researched for cross-platform Ctrl+C handling; not adopted because a global handler alone does not define correct child process/job-control semantics.
 
 These projects are references, not automatic dependencies. Each future adoption decision requires its own license, maintenance, security, portability, performance, and architectural review.
 
