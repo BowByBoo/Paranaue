@@ -51,4 +51,39 @@ mod tests {
         let result = run("\0", &[], Path::new("."));
         assert!(result.is_err());
     }
+
+    #[cfg(unix)]
+    #[test]
+    fn preserves_successful_exit_status() {
+        let status = run("true", &[], Path::new(".")).expect("true must execute");
+        assert!(status.success());
+        assert_eq!(status.code(), Some(0));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn preserves_nonzero_exit_status() {
+        let args = vec!["7".to_owned()];
+        let status = run("false", &args, Path::new(".")).expect("false must execute");
+        assert!(!status.success());
+        assert_ne!(status.code(), Some(0));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn preserves_successful_exit_status() {
+        let args = vec!["/C".to_owned(), "exit".to_owned(), "0".to_owned()];
+        let status = run("cmd", &args, Path::new(".")).expect("cmd must execute");
+        assert!(status.success());
+        assert_eq!(status.code(), Some(0));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn preserves_nonzero_exit_status() {
+        let args = vec!["/C".to_owned(), "exit".to_owned(), "7".to_owned()];
+        let status = run("cmd", &args, Path::new(".")).expect("cmd must execute");
+        assert!(!status.success());
+        assert_eq!(status.code(), Some(7));
+    }
 }
