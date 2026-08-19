@@ -1,26 +1,13 @@
 use std::env;
 use std::fs;
 use std::io;
-use std::path::PathBuf;
 
-const HISTORY_FILE: &str = "history";
-const FORGE_DIR: &str = "forge";
+use crate::paths;
+
 const DISABLE_HISTORY_ENV: &str = "FORGE_NO_HISTORY";
 
-pub fn path() -> Option<PathBuf> {
-    #[cfg(windows)]
-    let base = env::var_os("APPDATA").map(PathBuf::from);
-
-    #[cfg(target_os = "macos")]
-    let base = env::var_os("HOME")
-        .map(|home| PathBuf::from(home).join("Library").join("Application Support"));
-
-    #[cfg(all(unix, not(target_os = "macos")))]
-    let base = env::var_os("XDG_STATE_HOME")
-        .map(PathBuf::from)
-        .or_else(|| env::var_os("HOME").map(|home| PathBuf::from(home).join(".local").join("state")));
-
-    base.map(|base| base.join(FORGE_DIR).join(HISTORY_FILE))
+pub fn path() -> Option<std::path::PathBuf> {
+    paths::history_file()
 }
 
 pub fn enabled() -> bool {
