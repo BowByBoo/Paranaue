@@ -91,8 +91,8 @@ mod tests {
     #[test]
     fn executes_in_the_requested_working_directory() {
         let base = unique_temp_path("forge-process-cwd");
-        std::fs::create_dir_all(&base).unwrap();
-        let expected = base.canonicalize().unwrap();
+        std::fs::create_dir_all(&base).expect("temporary cwd should be created");
+        let expected = base.canonicalize().expect("temporary cwd should canonicalize");
         let args = vec![
             "-c".to_owned(),
             "test \"$PWD\" = \"$1\"".to_owned(),
@@ -101,14 +101,26 @@ mod tests {
         ];
         let status = run("sh", &args, &base).expect("shell must execute");
         assert!(status.success(), "child process did not observe requested cwd");
-        std::fs::remove_dir_all(base).unwrap();
+        std::fs::remove_dir_all(base).expect("temporary cwd should be removable");
     }
 
+    #[cfg(unix)]
     #[test]
     fn rejects_a_missing_working_directory_before_launching() {
         let missing = unique_temp_path("forge-missing-cwd");
-        let result = run("forge-test-command-that-must-not-exist-7c4b1d9e", &[], &missing);
-        assert!(result.is_err());
+        let result = run("true", &[], &missing);
+        let error = result.expect_err("a missing cwd must prevent launch");
+        assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn rejects_a_missing_working_directory_before_launching() {
+        let missing = unique_temp_path("forge-missing-cwd");
+        let args = vec!["/C".to_owned(), "exit 0".to_owned()];
+        let result = run("cmd", &args, &missing);
+        let error = result.expect_err("a missing cwd must prevent launch");
+        assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
     }
 
     fn unique_temp_path(prefix: &str) -> std::path::PathBuf {
