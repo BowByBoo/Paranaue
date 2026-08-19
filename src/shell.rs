@@ -163,3 +163,41 @@ fn home_directory() -> Option<PathBuf> {
     #[cfg(not(windows))]
     { env::var_os("HOME").map(PathBuf::from) }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Shell;
+    use std::env;
+    use std::fs;
+
+    #[test]
+    fn new_shell_starts_in_current_directory() {
+        let shell = Shell::new();
+        assert_eq!(shell.current_dir, env::current_dir().unwrap());
+    }
+
+    #[test]
+    fn change_directory_rejects_more_than_one_argument_at_command_boundary() {
+        // This test documents the command contract without launching a process.
+        let mut shell = Shell::new();
+        let original = shell.current_dir.clone();
+        let result = shell.execute("cd one two");
+        assert!(result.is_err());
+        assert_eq!(shell.current_dir, original);
+    }
+
+    #[test]
+    fn change_directory_uses_relative_paths_from_shell_directory() {
+        let base = env::temp_dir().join(format!("forge-shell-test-{}", std::process::id()));
+        let child = base.join("child");
+        let _ = fs::remove_dir_all(&base);
+        fs::create_dir_all(&child).unwrap();
+
+        let mut shell = Shell::new();
+        shell.current_dir = base.clone();
+        shell.change_directory(Some("child")).unwrap();
+        assert_eq!(shell.current_dir, child.canonicalize().unwrap());
+
+        fs::remove_dir_all(base).unwrap();
+    }
+}
