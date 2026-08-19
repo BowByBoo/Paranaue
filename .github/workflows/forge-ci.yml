@@ -27,14 +27,17 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Generate dependency lockfile
+        run: cargo generate-lockfile
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
       - name: Run Clippy
-        run: cargo clippy --locked --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run tests
-        run: cargo test --locked --all-targets --all-features
+        run: cargo test --all-targets --all-features
 
       - name: Build release
-        run: cargo build --locked --release
+        run: cargo build --release
